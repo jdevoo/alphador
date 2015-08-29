@@ -1,5 +1,10 @@
 jQuery.fn.extend({
 });
 
-#(function() {
+$(function() {
+
+  $('.equalheights').css({
+    'height': $('.equalheights').height()
+  });
+
 });
