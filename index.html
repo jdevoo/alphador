@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Alpha Dor</title>
+  <link rel="stylesheet" href="bootstrap-3.3.5/css/bootstrap.min.css">
+  <link rel="stylesheet" href="bootstrap-3.3.5/css/bootstrap-theme.min.css">
+  <!--[if lt IE 9]>
+    <script src="js/html5shiv-3.7.3.min.js"></script>
+    <script src="js/respond.min.js"></script>
+  <![endif]-->
+</head>
+
+
+<body>
+<div class="container-fluid">
+<div class="row">
+  <nav class="navbar navbar-default">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#">Alpha Dor</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav navbar-right">
+        <li><p class="navbar-text">jdevoo on localhost</p></li>
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Tenant <span class="caret"></span></a>
+          <ul class="dropdown-menu">
+            <li><a href="#">Tenant1</a></li>
+          </ul>
+        </li>
+        <li><button type="button" class="btn btn-default navbar-btn">Sign out</button></li>
+      </ul>
+    </div>
+  </nav>
+</div>
+
+<!--
+<div class="row">
+  <div class="container-fluid">
+    <p class="bg-info">flash message here</p>
+  </div>
+</div>
+-->
+
+<div class="row">
+  <div class="col-md-3 col-xs-3">
+    <div class="panel panel-default equalheights">
+      <div class="panel-heading">
+        <h3 class="panel-title">Spider Services</h3>
+      </div>
+      <div class="panel-body">
+        <ul class="list-group">
+          <a href="#" class="list-group-item">Applications<span class="badge">1</span></a>
+          <a href="#" class="list-group-item">Tasks<span class="badge">4</span></a>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3 col-xs-3">
+    <div class="panel panel-default equalheights">
+      <div class="panel-heading">
+        <h3 class="panel-title">Applications</h3>
+      </div>
+      <div class="panel-body">
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3 col-xs-3">
+    <div class="panel panel-default equalheights">
+      <div class="panel-heading">
+        <h3 class="panel-title">Tables</h3>
+      </div>
+      <div class="panel-body">
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3 col-xs-3">
+    <div class="panel panel-default equalheights">
+      <div class="panel-heading">
+        <h3 class="panel-title">Fields</h3>
+      </div>
+      <div class="panel-body">
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12 col-xs-12">
+    <ul class="nav nav-tabs">
+      <li role="presentation"><a href="#">Metadata</a></li>
+      <li role="presentation" class="active"><a href="#">Query</a></li>
+    </ul>
+<!--
+    <div class="panel panel-default">
+      <div class="panel-body">
+        <form>
+          <div class="form-group">
+            <textarea class="form-control" rows="3"></textarea>
+          </div>
+          <button type="submit" class="btn btn-default form-right">POST</button>
+        </form>
+      </div>
+    </div>
+-->
+    <div class="panel panel-default">
+      <div class="panel-body">
+        <form>
+          <div class="form-group">
+            <textarea class="form-control" rows="3"></textarea>
+          </div>
+          <button type="submit" class="btn btn-default form-right">GET</button>
+        </form>
+      </div>
+    </div>
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">Results</h3>
+      </div>
+      <div class="panel-body">
+        <table class="table table-condensed table-striped">
+          <tr>
+            <th>heading</th>
+            <th>heading</th>
+            <th>heading</th>
+            <th>heading</th>
+            <th>heading</th>
+          </tr>
+          <tr>
+            <td>value</td>
+            <td>value</td>
+            <td>value</td>
+            <td>value</td>
+            <td>value</td>
+          </tr>
+        </table> 
+      </div>
+      <nav>
+        <ul class="pager">
+          <li><a href="#">Previous</a></li>
+          <li><a href="#">Next</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+</div>
+
+
+<script src="js/jquery-1.11.3.min.js"></script>
+<script src="bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){
+  $('.equalheights').css({
+    'height': $('.equalheights').height()
+  });
+});
+</script>
+</body>
+
+
+</html>
