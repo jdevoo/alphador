@@ -9,6 +9,7 @@
   <title>Alpha Dor</title>
   <link rel="stylesheet" href="bootstrap-3.3.5/css/bootstrap.min.css">
   <link rel="stylesheet" href="bootstrap-3.3.5/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="css/app.css">
   <!--[if lt IE 9]>
     <script src="js/html5shiv-3.7.3.min.js"></script>
     <script src="js/respond.min.js"></script>
@@ -25,14 +26,14 @@
         <a class="navbar-brand" href="#">Alpha Dor</a>
       </div>
       <div class="navbar-header">
-        <p id="flashMsg" class="navbar-text bg-info collapse"></p>
+        <p id="flashMsg" class="navbar-text collapse"></p>
       </div>
       <div id="navbar" class="navbar-collapse collapse">
         <ul class="nav navbar-nav navbar-right">
           <div id="creds" class="collapse">
             <li><p class="navbar-text">&nbsp;</p></li>
           </div>
-          <li><button type="button" class="btn btn-default navbar-btn" data-toggle="modal" data-target="#host-form">Doradus</button></li>
+          <li><button type="button" class="btn btn-default navbar-btn" data-toggle="modal" data-target="#host-form">localhost</button></li>
         </ul>
       </div>
       <div id="host-form" class="modal fade" tabindex="-1" role="dialog">
@@ -149,37 +150,37 @@
 <div class="row-fluid">
   <div class="col-md-12 col-xs-12">
     <ul class="nav nav-tabs">
-      <li id="tab1" role="presentation" class="active"><a data-toggle="tab" href="#tab-metadata">Tenants</a></li>
-      <li id="tab2" role="presentation" class="disabled"><a data-toggle="tab" href="#tab-query">Query</a></li>
+      <li id="tab-schema" role="presentation" class="active"><a data-toggle="tab" href="#tab-pane-schema">Schema</a></li>
+      <li id="tab-data" role="presentation" class="disabled"><a data-toggle="tab" href="#tab-pane-data">Data</a></li>
     </ul>
     <div class="tab-content">
-      <div id="tab-metadata" class="tab-pane active">
+      <div id="tab-pane-schema" class="tab-pane active">
         <div class="panel panel-default">
           <div class="panel-body">
             <form>
               <div class="form-group">
-                <textarea id="raw" class="form-control" rows="5"></textarea>
+                <textarea id="schema-text" class="form-control" rows="5"></textarea>
               </div>
-              <button type="submit" class="btn btn-default disabled">POST</button>
-              <button type="submit" class="btn btn-default disabled">PUT</button>
-              <button type="submit" class="btn btn-default disabled">DELETE</button>
+              <button id="put" type="submit" class="btn btn-default" disabled>UPSERT</button>
+              <button id="delete" type="submit" class="btn btn-default" disabled>DELETE</button>
             </form>
           </div>
         </div>
       </div>
-      <div id="tab-query" class="tab-pane">
+      <div id="tab-pane-data" class="tab-pane">
         <div class="panel panel-default">
           <div class="panel-body">
             <form>
               <div class="form-group">
-                <textarea class="form-control" rows="3"></textarea>
+                <textarea id="data-text" class="form-control" rows="5"></textarea>
               </div>
-              <button type="submit" class="btn btn-default disabled">GET</button>
-              <button type="submit" class="btn btn-default disabled">PUT</button>
+              <button id="post" type="submit" class="btn btn-default" disabled>UPSERT</button>
+              <button id="delete" type="submit" class="btn btn-default" disabled>DELETE</button>
+              <button id="get" type="submit" class="btn btn-default" disabled>QUERY</button>
             </form>
           </div>
         </div>
-        <div class="panel panel-default">
+        <div class="panel panel-default hidden">
           <div class="panel-body">
             <table class="table table-condensed table-striped">
               <tr>
