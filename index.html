@@ -33,7 +33,7 @@
           <div id="creds" class="collapse">
             <li><p class="navbar-text">&nbsp;</p></li>
           </div>
-          <li><button type="button" class="btn btn-default navbar-btn" data-toggle="modal" data-target="#host-form">localhost</button></li>
+          <li><button id="login" type="button" class="btn btn-default navbar-btn" data-toggle="modal" data-target="#host-form"><span class="glyphicon glyphicon-log-in" aria-hidden="true"></span>&nbsp;&nbsp;localhost</button></li>
         </ul>
       </div>
       <div id="host-form" class="modal fade" tabindex="-1" role="dialog">
@@ -152,6 +152,7 @@
     <ul class="nav nav-tabs">
       <li id="tab-schema" role="presentation" class="active"><a data-toggle="tab" href="#tab-pane-schema">Schema</a></li>
       <li id="tab-data" role="presentation" class="disabled"><a data-toggle="tab" href="#tab-pane-data">Data</a></li>
+      <li id="tab-query" role="presentation" class="disabled"><a data-toggle="tab" href="#tab-pane-query">Query</a></li>
     </ul>
     <div class="tab-content">
       <div id="tab-pane-schema" class="tab-pane active">
@@ -161,7 +162,7 @@
               <div class="form-group">
                 <textarea id="schema-text" class="form-control" rows="5"></textarea>
               </div>
-              <button id="put" type="submit" class="btn btn-default" disabled>UPSERT</button>
+              <button id="put" type="submit" class="btn btn-default">UPSERT</button>
               <button id="delete" type="submit" class="btn btn-default" disabled>DELETE</button>
             </form>
           </div>
@@ -174,9 +175,20 @@
               <div class="form-group">
                 <textarea id="data-text" class="form-control" rows="5"></textarea>
               </div>
-              <button id="post" type="submit" class="btn btn-default" disabled>UPSERT</button>
+              <button id="post" type="submit" class="btn btn-default">UPSERT</button>
               <button id="delete" type="submit" class="btn btn-default" disabled>DELETE</button>
-              <button id="get" type="submit" class="btn btn-default" disabled>QUERY</button>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div id="tab-pane-query" class="tab-pane">
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <form>
+              <div class="form-group">
+                <textarea id="query-text" class="form-control" rows="5"></textarea>
+              </div>
+              <button id="get" type="submit" class="btn btn-default">GET</button>
             </form>
           </div>
         </div>

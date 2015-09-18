@@ -14,12 +14,15 @@ var sb = {
   fields: {},
 
   setState: function(panel, item) {
-    $('#tab-pane-schema #post').prop('disabled', item !== 'new');
     $('#tab-pane-schema #delete').prop('disabled', item === 'new');
+    $('#tab-pane-data #delete').prop('disabled', item === 'new');
+    $('#tab-pane-data #get').prop('disabled', item === 'new');
     if (panel !== '' && panel !== 'Tenants' && item !== 'new') {
       $('#tab-data').removeClass('disabled');
+      $('#tab-query').removeClass('disabled');
     } else if (!$('#tab-data').hasClass('disabled')) {
-        $('#tab-data').addClass('disabled');
+      $('#tab-data').addClass('disabled');
+      $('#tab-query').addClass('disabled');
     }
     sb.state = panel;
   },
@@ -130,7 +133,7 @@ var sb = {
     });
 
     $('#panel4').on('click', '.list-group-item', function() {
-      sb.field = $(this).text();
+      sb.field = Object.keys(sb.fields)[$(this).index()];
       $(this).parent().find('a').removeClass('active');
       $(this).addClass('active');
       if (sb.field === 'new') {
@@ -145,7 +148,7 @@ var sb = {
         }, null, 2));
       } else {
         $('#schema-text').val(JSON.stringify(
-          sb.tables[sb.table].fields[sb.field], null, 2)
+          sb.fields[sb.field], null, 2)
         );
       }
       sb.setState('Fields', sb.field);
@@ -167,7 +170,8 @@ var sb = {
         sb.table = '';
         sb.tables = {};
         sb.field = '';
-        $('.nav button').text(host);
+        sb.fields = {};
+        $('#login').html('<span class="glyphicon glyphicon-log-in" aria-hidden="true"></span>&nbsp;&nbsp;'+host);
         $('#schema-text').val(JSON.stringify(sb.tenants, null, 2));
         for(ten in sb.tenants) {
           $('#panel1 ul.list-group').append(
@@ -175,7 +179,7 @@ var sb = {
           );
         };
         $('#panel1 ul.list-group').append(
-          '<a href="#" class="list-group-item">new</a>'
+          '<a href="#" class="list-group-item">new<span class="pull-right glyphicon glyphicon-plus" aria-hidden="true"></span></a>'
         );
         sb.equalizePannels();
       }
@@ -183,13 +187,17 @@ var sb = {
   },
 
   setApps: function(tenant) {
+    sb.table = '';
+    sb.tables = {};
+    sb.field = '';
+    sb.fields = {};
     sb.tenants[tenant].applications.map(function(item) {
       $('#panel2 ul.list-group').append(
         '<a href="#" class="list-group-item">'+item+'</a>'
       );
     });
     $('#panel2 ul.list-group').append(
-      '<a href="#" class="list-group-item">new</a>'
+      '<a href="#" class="list-group-item">new<span class="pull-right glyphicon glyphicon-plus" aria-hidden="true"></span></a>'
     );
     sb.equalizePannels();
   },
@@ -202,6 +210,8 @@ var sb = {
       success: function(res) {
         sb.apps = res[app];
         sb.tables = res[app].tables;
+        sb.field = '';
+        sb.fields = {};
         $('#schema-text').val(JSON.stringify(sb.apps, null, 2));
         Object.keys(sb.tables).map(function(item) {
           $('#panel3 ul.list-group').append(
@@ -209,7 +219,7 @@ var sb = {
           );
         });
         $('#panel3 ul.list-group').append(
-          '<a href="#" class="list-group-item">new</a>'
+          '<a href="#" class="list-group-item">new<span class="pull-right glyphicon glyphicon-plus" aria-hidden="true"></span></a>'
         );
         sb.equalizePannels();
       }
@@ -217,37 +227,51 @@ var sb = {
   },
 
   setFields: function(table) {
-    var fields = sb.tables[table].fields;
-    Object.keys(fields).map(function(item) {
+    sb.field = '';
+    sb.fields = sb.tables[table].fields;
+    Object.keys(sb.fields).map(function(item) {
+      var t = sb.fields[item].type;
       $('#panel4 ul.list-group').append(
-        '<a href="#" class="list-group-item">'+item+'</a>'
+        '<a href="#" class="list-group-item">'+
+          '<span class="badge">'+
+          (t === undefined ? 'GROUP' : t)+
+          '</span>'+item+
+        '</a>'
       );
     });
     $('#panel4 ul.list-group').append(
-      '<a href="#" class="list-group-item">new</a>'
+      '<a href="#" class="list-group-item">new<span class="pull-right glyphicon glyphicon-plus" aria-hidden="true"></span></a>'
     );
     sb.equalizePannels();
   }
 };
 
 var app = {
+  hadErr: false,
+
   setupAjaxCallbacks: function() {
     $(document).ajaxStart(function() {
       $('#flashMsg').text('loading...').show();
     });
 
     $(document).ajaxStop(function() {
-      $('#flashMsg').delay(500).fadeOut(500);
+      var d = 1000;
+      if (app.hadErr) {
+        app.hadErr = false;
+        d = 10000;
+      }
+      $('#flashMsg').delay(d).fadeOut(500);
     });
 
     $(document).ajaxError(function(event, xhr, opts, err) {
+      app.hadErr = true;
       $('#flashMsg').html('<span class="label label-danger">Error</span>&nbsp;&nbsp;'+xhr.statusText.toLowerCase()).show();
       console.log(JSON.stringify(xhr));
     });
   },
 
   setupNavbar: function() {
-    $('.nav button').text('no host');
+    $('#login').html('<span class="glyphicon glyphicon-log-in" aria-hidden="true"></span>&nbsp;&nbsp;no host');
     $('#set_host').click(function() {
       var host = $('#hostname').val();
       var port = $('#port').val();
