@@ -29,7 +29,7 @@ var sb = {
  
   clearPanelsFrom: function(panel) {
     switch(panel) {
-      case null:
+      case undefined:
       case 'Tenants':
         $('#panel1 .list-group').find('a').remove();
       case 'Applications':
