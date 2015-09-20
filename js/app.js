@@ -1,34 +1,46 @@
-// spiderBrowser
+// doradusBrowser
 
-var sb = {
-  state: '',
+var db = {
+  state: undefined,
   host: '',
   port: '',
   app: '',
   apps: {},
   tenant: '',
-  tenants: [],
+  tenants: {},
   table: '',
   tables: {},
   field: '',
   fields: {},
+  cm: {}, // CodeMirror instances
 
   setState: function(panel, item) {
-    $('#tab-pane-schema #delete').prop('disabled', item === 'new');
-    $('#tab-pane-data #delete').prop('disabled', item === 'new');
-    $('#tab-pane-data #get').prop('disabled', item === 'new');
-    if (panel !== '' && panel !== 'Tenants' && item !== 'new') {
+    $('.tab-content #get').prop('disabled',
+      item === undefined || item === 'new'
+    );
+    $('.tab-content #post').prop('disabled',
+      item === undefined || item !== 'new'
+    );
+    $('.tab-content #put').prop('disabled',
+      item === undefined || item === 'new'
+    );
+    $('.tab-content #delete').prop('disabled',
+      item === undefined || item === 'new'
+    );
+    if (panel !== undefined &&
+        panel !== 'Tenants' &&
+        item !== 'new') {
       $('#tab-data').removeClass('disabled');
       $('#tab-query').removeClass('disabled');
     } else if (!$('#tab-data').hasClass('disabled')) {
       $('#tab-data').addClass('disabled');
       $('#tab-query').addClass('disabled');
     }
-    sb.state = panel;
+    db.state = panel;
   },
  
   clearPanelsFrom: function(panel) {
-    switch(panel) {
+    switch (panel) {
       case undefined:
       case 'Tenants':
         $('#panel1 .list-group').find('a').remove();
@@ -40,8 +52,9 @@ var sb = {
         $('#panel4 .list-group').find('a').remove();
         break;
     }
-    $('#schema-text').val('');
-    $('#data-text').val('');
+    db.cm['#schema-text'].getDoc().setValue('{}');
+    db.cm['#data-text'].getDoc().setValue('{}');
+    $('#query-text').val('');
     $('[id^=panel]').css('height', 'auto');
   },
 
@@ -55,22 +68,33 @@ var sb = {
     $('[id^=panel]').css('height', mh);
   },
 
-  init: function() {
-    sb.clearPanelsFrom('Tenants');
+  assignEditor: function(id, linter) {
+    db.cm[id] = CodeMirror.fromTextArea($(id)[0], {
+      mode: 'application/json',
+      gutters: ['CodeMirror-lint-markers'],
+      lint: true,
+      autoRefresh: true,
+      lineNumbers: true
+    });
+  },
 
-    $('.nav-tabs').on('show.bs.tab', 'li.disabled a', function(e) {
-      e.stopImmediatePropagation();
+  init: function() {
+    db.assignEditor('#schema-text');
+    db.assignEditor('#data-text');
+    db.clearPanelsFrom('Tenants');
+    $('.nav-tabs').on('show.bs.tab', 'li.disabled', function(e) {
       return false;
     });
-    $('.nav-tabs').off('show.bs.tab', 'li:not(.disabled) a')
+    db.setState();
 
     $('#panel1').on('click', '.list-group-item', function() {
-      sb.tenant = $(this).text();
+      db.tenant = $(this).text();
       $(this).parent().find('a').removeClass('active');
       $(this).addClass('active');
-      sb.clearPanelsFrom('Applications');
-      if (sb.tenant === 'new') {
-        $('#schema-text').val(JSON.stringify({
+      db.clearPanelsFrom('Applications');
+      $('#tab-schema a').tab('show');
+      if (db.tenant === 'new') {
+        db.cm['#schema-text'].getDoc().setValue(JSON.stringify({
           "HelloKitty": {
             "users": {
               "Katniss": {"password": "Everdeen"}
@@ -80,78 +104,100 @@ var sb = {
             }
           }
         }, null, 2));
-        sb.equalizePannels();
+        db.equalizePannels();
       } else {
-        sb.setApps(sb.tenant);
-        $('#schema-text').val(JSON.stringify(sb.tenants, null, 2));
+        db.setApps(db.tenant);
+        db.cm['#schema-text'].getDoc().setValue(
+          JSON.stringify(db.tenants, null, 2)
+        );
       }
-      sb.setState('Tenants', sb.tenant);
+      db.setState('Tenants', db.tenant);
     });
 
     $('#panel2').on('click', '.list-group-item', function() {
-      sb.app = $(this).text();
+      db.app = $(this).text();
       $(this).parent().find('a').removeClass('active');
       $(this).addClass('active');
-      sb.clearPanelsFrom('Tables');
-      if (sb.app === 'new') {
-        $('#schema-text').val(JSON.stringify({
-          "Msgs": {
-            "key": "MsgsKey",
+      db.clearPanelsFrom('Tables');
+      if (db.app === 'new') {
+        db.cm['#schema-text'].getDoc().setValue(JSON.stringify({
+          "AppName": {
+            "key": "AppKey",
             "options": { },
             "tables": { }
           }
         }, null, 2));
-        sb.equalizePannels();
+        db.equalizePannels();
       } else {
-        sb.setTables(sb.app);
-        $('#schema-text').val(JSON.stringify(
-          sb.apps.options, null, 2)
-        );
+        db.setTables(db.app);
+        if (db.apps.options !== undefined) {
+          db.cm['#schema-text'].getDoc().setValue(JSON.stringify(
+            db.apps.options, null, 2)
+          );
+        }
       }
-      sb.setState('Applications', sb.app);
+      db.setState('Applications', db.app);
     });
 
     $('#panel3').on('click', '.list-group-item', function() {
-      sb.table = $(this).text();
+      db.table = $(this).text();
       $(this).parent().find('a').removeClass('active');
       $(this).addClass('active');
-      sb.clearPanelsFrom('Fields');
-      if (sb.table === 'new') {
-        $('#schema-text').val(JSON.stringify({
+      db.clearPanelsFrom('Fields');
+      if (db.table === 'new') {
+        db.cm['#schema-text'].getDoc().setValue(JSON.stringify({
           "tables": {
-            "Message": {
+            "TableName": {
               "fields": { },
               "aliases": { }
             }
           }
         }, null, 2));
-        sb.equalizePannels();
+        db.equalizePannels();
       } else {
-        sb.setFields(sb.table);
+        db.setFields(db.table);
+        if (db.tables[db.table].options !== undefined) {
+          db.cm['#schema-text'].getDoc().setValue(JSON.stringify(
+            db.tables[db.table].options, null, 2)
+          );
+        }
       }
-      sb.setState('Tables', sb.table);
+      db.setState('Tables', db.table);
     });
 
     $('#panel4').on('click', '.list-group-item', function() {
-      sb.field = Object.keys(sb.fields)[$(this).index()];
+      if ($(this).text() !== 'new') {
+        db.field = Object.keys(db.fields)[$(this).index()];
+      } else {
+        db.field = 'new';
+      }
       $(this).parent().find('a').removeClass('active');
       $(this).addClass('active');
-      if (sb.field === 'new') {
-        $('#schema-text').val(JSON.stringify({
+      if (db.field === 'new') {
+        db.cm['#schema-text'].getDoc().setValue(JSON.stringify({
           "fields": {
-            "DirectReports": {
-              "table": sb.table,
+            "FieldName": {
+              "table": db.table,
               "type": "",
               "analyzer": ""
             }
           }
         }, null, 2));
       } else {
-        $('#schema-text').val(JSON.stringify(
-          sb.fields[sb.field], null, 2)
+        db.cm['#schema-text'].getDoc().setValue(JSON.stringify(
+          db.fields[db.field], null, 2)
         );
       }
-      sb.setState('Fields', sb.field);
+      db.setState('Fields', db.field);
+    });
+
+    $('#tab-pane-schema').on('click', '#post', function() {
+      event.preventDefault();
+      try {
+        JSON.parse(db.cm['#schema-text'].getValue());
+      } catch(e) {
+        console.log(e);
+      }
     });
   },
 
@@ -161,19 +207,21 @@ var sb = {
       method: 'GET',
       contentType: 'application/json',
       success: function(res) {
-        sb.tenant = '';
-        sb.tenants = res.tenants;
-        sb.host = host;
-        sb.port = port;
-        sb.app = '';
-        sb.apps = {};
-        sb.table = '';
-        sb.tables = {};
-        sb.field = '';
-        sb.fields = {};
+        db.tenant = '';
+        db.tenants = res.tenants;
+        db.host = host;
+        db.port = port;
+        db.app = '';
+        db.apps = {};
+        db.table = '';
+        db.tables = {};
+        db.field = '';
+        db.fields = {};
         $('#login').html('<span class="glyphicon glyphicon-log-in" aria-hidden="true"></span>&nbsp;&nbsp;'+host);
-        $('#schema-text').val(JSON.stringify(sb.tenants, null, 2));
-        for(ten in sb.tenants) {
+        db.cm['#schema-text'].getDoc().setValue(
+          JSON.stringify(db.tenants, null, 2)
+        );
+        for(ten in db.tenants) {
           $('#panel1 ul.list-group').append(
             '<a href="#" class="list-group-item">'+ten+'</a>'
           );
@@ -181,17 +229,17 @@ var sb = {
         $('#panel1 ul.list-group').append(
           '<a href="#" class="list-group-item">new<span class="pull-right glyphicon glyphicon-plus" aria-hidden="true"></span></a>'
         );
-        sb.equalizePannels();
+        db.equalizePannels();
       }
     });
   },
 
   setApps: function(tenant) {
-    sb.table = '';
-    sb.tables = {};
-    sb.field = '';
-    sb.fields = {};
-    sb.tenants[tenant].applications.map(function(item) {
+    db.table = '';
+    db.tables = {};
+    db.field = '';
+    db.fields = {};
+    db.tenants[tenant].applications.map(function(item) {
       $('#panel2 ul.list-group').append(
         '<a href="#" class="list-group-item">'+item+'</a>'
       );
@@ -199,21 +247,23 @@ var sb = {
     $('#panel2 ul.list-group').append(
       '<a href="#" class="list-group-item">new<span class="pull-right glyphicon glyphicon-plus" aria-hidden="true"></span></a>'
     );
-    sb.equalizePannels();
+    db.equalizePannels();
   },
 
   setTables: function(app) {
     $.ajax({
-      url: 'http://'+sb.host+':'+sb.port+'/_applications/'+app,
+      url: 'http://'+db.host+':'+db.port+'/_applications/'+app,
       method: 'GET',
       contentType: 'application/json',
       success: function(res) {
-        sb.apps = res[app];
-        sb.tables = res[app].tables;
-        sb.field = '';
-        sb.fields = {};
-        $('#schema-text').val(JSON.stringify(sb.apps, null, 2));
-        Object.keys(sb.tables).map(function(item) {
+        db.apps = res[app];
+        db.tables = res[app].tables;
+        db.field = '';
+        db.fields = {};
+        db.cm['#schema-text'].getDoc().setValue(
+          JSON.stringify(db.apps.options, null, 2)
+        );
+        Object.keys(db.tables).map(function(item) {
           $('#panel3 ul.list-group').append(
             '<a href="#" class="list-group-item">'+item+'</a>'
           );
@@ -221,16 +271,16 @@ var sb = {
         $('#panel3 ul.list-group').append(
           '<a href="#" class="list-group-item">new<span class="pull-right glyphicon glyphicon-plus" aria-hidden="true"></span></a>'
         );
-        sb.equalizePannels();
+        db.equalizePannels();
       }
     });
   },
 
   setFields: function(table) {
-    sb.field = '';
-    sb.fields = sb.tables[table].fields;
-    Object.keys(sb.fields).map(function(item) {
-      var t = sb.fields[item].type;
+    db.field = '';
+    db.fields = db.tables[table].fields;
+    Object.keys(db.fields).map(function(item) {
+      var t = db.fields[item].type;
       $('#panel4 ul.list-group').append(
         '<a href="#" class="list-group-item">'+
           '<span class="badge">'+
@@ -242,7 +292,7 @@ var sb = {
     $('#panel4 ul.list-group').append(
       '<a href="#" class="list-group-item">new<span class="pull-right glyphicon glyphicon-plus" aria-hidden="true"></span></a>'
     );
-    sb.equalizePannels();
+    db.equalizePannels();
   }
 };
 
@@ -275,8 +325,8 @@ var app = {
     $('#set_host').click(function() {
       var host = $('#hostname').val();
       var port = $('#port').val();
-      sb.clearPanelsFrom('Tenants');
-      sb.setTenants(host, port);
+      db.clearPanelsFrom('Tenants');
+      db.setTenants(host, port);
     });
   }
 };
@@ -284,5 +334,5 @@ var app = {
 $(function() {
   app.setupAjaxCallbacks();
   app.setupNavbar();
-  sb.init();
+  db.init();
 });
