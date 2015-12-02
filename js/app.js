@@ -2,10 +2,11 @@
 
 var db = {
   state: undefined,
+  protocol: 'http',
   host: '',
   port: '',
-  app: '',
-  apps: {},
+  app: '', // selection
+  apps: {}, // choices
   tenant: '',
   tenants: {},
   table: '',
@@ -14,7 +15,7 @@ var db = {
   fields: {},
   cm: {}, // CodeMirror instances
 
-  setState: function(panel, item) {
+  setTabsFor: function(panel, item) {
     $('.tab-content #get').prop('disabled',
       item === undefined || item === 'new'
     );
@@ -27,12 +28,10 @@ var db = {
     $('.tab-content #delete').prop('disabled',
       item === undefined || item === 'new'
     );
-    if (panel !== undefined &&
-        panel !== 'Tenants' &&
-        item !== 'new') {
+    if (panel === 'Tables' && item !== 'new') {
       $('#tab-data').removeClass('disabled');
       $('#tab-query').removeClass('disabled');
-    } else if (!$('#tab-data').hasClass('disabled')) {
+    } else {
       $('#tab-data').addClass('disabled');
       $('#tab-query').addClass('disabled');
     }
@@ -85,7 +84,7 @@ var db = {
     $('.nav-tabs').on('show.bs.tab', 'li.disabled', function(e) {
       return false;
     });
-    db.setState();
+    db.setTabsFor();
 
     $('#panel1').on('click', '.list-group-item', function() {
       db.tenant = $(this).text();
@@ -111,7 +110,7 @@ var db = {
           JSON.stringify(db.tenants, null, 2)
         );
       }
-      db.setState('Tenants', db.tenant);
+      db.setTabsFor('Tenants', db.tenant);
     });
 
     $('#panel2').on('click', '.list-group-item', function() {
@@ -136,7 +135,7 @@ var db = {
           );
         }
       }
-      db.setState('Applications', db.app);
+      db.setTabsFor('Applications', db.app);
     });
 
     $('#panel3').on('click', '.list-group-item', function() {
@@ -162,7 +161,13 @@ var db = {
           );
         }
       }
-      db.setState('Tables', db.table);
+      db.cm['#data-text'].getDoc().setValue(JSON.stringify({
+        "batch": {
+          "docs": [
+            {"doc": {}}
+          ]
+        }}, null, 2));
+      db.setTabsFor('Tables', db.table);
     });
 
     $('#panel4').on('click', '.list-group-item', function() {
@@ -188,7 +193,7 @@ var db = {
           db.fields[db.field], null, 2)
         );
       }
-      db.setState('Fields', db.field);
+      db.setTabsFor('Fields', db.field);
     });
 
     $('#tab-pane-schema').on('click', '#post', function() {
@@ -201,9 +206,18 @@ var db = {
     });
   },
 
+  mkJSON: function(table) {
+    var jsonData = {};
+    Object.keys(db.fields).map(function(item) {
+      var t = db.fields[item].type;
+      jsonData[item] = "";
+    });
+    return jsonData;
+  },
+
   setTenants: function(host, port) {
     $.ajax({
-      url: 'http://'+host+':'+port+'/_tenants',
+      url: db.protocol+'://'+host+':'+port+'/_tenants',
       method: 'GET',
       contentType: 'application/json',
       success: function(res) {
@@ -252,7 +266,7 @@ var db = {
 
   setTables: function(app) {
     $.ajax({
-      url: 'http://'+db.host+':'+db.port+'/_applications/'+app,
+      url: db.protocol+'://'+db.host+':'+db.port+'/_applications/'+app,
       method: 'GET',
       contentType: 'application/json',
       success: function(res) {
