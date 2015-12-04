@@ -16,10 +16,12 @@ var db = {
   cm: {}, // CodeMirror instances
 
   setTabsFor: function(panel, item) {
+    if (db.state !== panel)
+      $('.nav-tabs a[href=#tab-pane-schema]').tab('show');
     $('.tab-content #get').prop('disabled',
       item === undefined || item === 'new'
     );
-    $('.tab-content #post').prop('disabled',
+    $('#tab-pane-schema #post').prop('disabled',
       item === undefined || item !== 'new'
     );
     $('.tab-content #put').prop('disabled',
@@ -77,6 +79,20 @@ var db = {
     });
   },
 
+  mkBatch: function(fields, template) {
+    Object.keys(fields).map(function(item) {
+      if (fields[item].type !== undefined) {
+        if ('collection' in fields[item])
+          template['batch']['docs']['doc'][item] = {'add': [""]};
+        else
+          template['batch']['docs']['doc'][item] = "";
+      } else {
+        db.mkBatch(fields[item].fields, template);
+      }
+    });
+    return template;
+  },
+
   init: function() {
     db.assignEditor('#schema-text');
     db.assignEditor('#data-text');
@@ -91,7 +107,7 @@ var db = {
       $(this).parent().find('a').removeClass('active');
       $(this).addClass('active');
       db.clearPanelsFrom('Applications');
-      $('#tab-schema a').tab('show');
+      db.setTabsFor('Tenants', db.tenant);
       if (db.tenant === 'new') {
         db.cm['#schema-text'].getDoc().setValue(JSON.stringify({
           "HelloKitty": {
@@ -110,7 +126,6 @@ var db = {
           JSON.stringify(db.tenants, null, 2)
         );
       }
-      db.setTabsFor('Tenants', db.tenant);
     });
 
     $('#panel2').on('click', '.list-group-item', function() {
@@ -118,6 +133,7 @@ var db = {
       $(this).parent().find('a').removeClass('active');
       $(this).addClass('active');
       db.clearPanelsFrom('Tables');
+      db.setTabsFor('Applications', db.app);
       if (db.app === 'new') {
         db.cm['#schema-text'].getDoc().setValue(JSON.stringify({
           "AppName": {
@@ -135,7 +151,6 @@ var db = {
           );
         }
       }
-      db.setTabsFor('Applications', db.app);
     });
 
     $('#panel3').on('click', '.list-group-item', function() {
@@ -143,6 +158,7 @@ var db = {
       $(this).parent().find('a').removeClass('active');
       $(this).addClass('active');
       db.clearPanelsFrom('Fields');
+      db.setTabsFor('Tables', db.table);
       if (db.table === 'new') {
         db.cm['#schema-text'].getDoc().setValue(JSON.stringify({
           "tables": {
@@ -161,13 +177,13 @@ var db = {
           );
         }
       }
-      db.cm['#data-text'].getDoc().setValue(JSON.stringify({
-        "batch": {
-          "docs": [
-            {"doc": {}}
-          ]
-        }}, null, 2));
-      db.setTabsFor('Tables', db.table);
+      var tmplt = {};
+      tmplt['batch'] = {};
+      tmplt['batch']['docs'] = {};
+      tmplt['batch']['docs']['doc'] = {};
+      db.cm['#data-text'].getDoc().setValue(JSON.stringify(
+        db.mkBatch(db.fields, tmplt), null, 2)
+      );
     });
 
     $('#panel4').on('click', '.list-group-item', function() {
@@ -178,6 +194,7 @@ var db = {
       }
       $(this).parent().find('a').removeClass('active');
       $(this).addClass('active');
+      db.setTabsFor('Fields', db.field);
       if (db.field === 'new') {
         db.cm['#schema-text'].getDoc().setValue(JSON.stringify({
           "fields": {
@@ -193,7 +210,6 @@ var db = {
           db.fields[db.field], null, 2)
         );
       }
-      db.setTabsFor('Fields', db.field);
     });
 
     $('#tab-pane-schema').on('click', '#post', function() {
@@ -204,15 +220,6 @@ var db = {
         console.log(e);
       }
     });
-  },
-
-  mkJSON: function(table) {
-    var jsonData = {};
-    Object.keys(db.fields).map(function(item) {
-      var t = db.fields[item].type;
-      jsonData[item] = "";
-    });
-    return jsonData;
   },
 
   setTenants: function(host, port) {
