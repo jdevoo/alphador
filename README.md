@@ -4,11 +4,11 @@ Simple front-end for [Dell Doradus](https://github.com/dell-oss/Doradus). Starte
 
 ## Installation
 
-Install on a web server and access from a browser.
+Deploy on a web server and access from a browser. Assumes running Cassandra and Doradus.
 
 ## Usage
 
-Start clicking the connect button in the navbar to connect to your Doradus cluster. The user interface is loosely based on an object browser as those found in Smalltalk IDEs.
+Start clicking the connect button in the navbar to connect to your Doradus instance. The user interface is loosely based on an OO browser as those found in Smalltalk.
 
 ## History
 

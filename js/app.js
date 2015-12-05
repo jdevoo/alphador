@@ -79,18 +79,18 @@ var db = {
     });
   },
 
-  mkBatch: function(fields, template) {
+  mkDoc: function(fields, doc) {
     Object.keys(fields).map(function(item) {
       if (fields[item].type !== undefined) {
         if ('collection' in fields[item])
-          template['batch']['docs']['doc'][item] = {'add': [""]};
+          doc[item] = {'add': [""]};
         else
-          template['batch']['docs']['doc'][item] = "";
+          doc[item] = "";
       } else {
-        db.mkBatch(fields[item].fields, template);
+        db.mkDoc(fields[item].fields, doc);
       }
     });
-    return template;
+    return doc;
   },
 
   init: function() {
@@ -177,12 +177,14 @@ var db = {
           );
         }
       }
-      var tmplt = {};
-      tmplt['batch'] = {};
-      tmplt['batch']['docs'] = {};
-      tmplt['batch']['docs']['doc'] = {};
+      var doc = {};
+      db.mkDoc(db.fields, doc);
+      var template = {};
+      template['batch'] = {};
+      template['batch']['docs'] = [];
+      template['batch']['docs'].push({'doc': doc});
       db.cm['#data-text'].getDoc().setValue(JSON.stringify(
-        db.mkBatch(db.fields, tmplt), null, 2)
+        template, null, 2)
       );
     });
 
