@@ -5,10 +5,10 @@ var db = {
   protocol: 'http',
   host: '',
   port: '',
-  app: '', // selection
-  apps: {}, // choices
-  tenant: '',
-  tenants: {},
+  tenant: '', // selection (string)
+  tenants: {}, // params (dict of dicts)
+  app: '',
+  apps: {},
   table: '',
   tables: {},
   field: '',
@@ -45,12 +45,20 @@ var db = {
       case undefined:
       case 'Tenants':
         $('#panel1 .list-group').find('a').remove();
+        db.tenant = '';
+        db.tenants = {};
       case 'Applications':
         $('#panel2 .list-group').find('a').remove();
+        db.app = '';
+        db.apps = {};
       case 'Tables':
         $('#panel3 .list-group').find('a').remove();
+        db.table = '';
+        db.tables = {};
       case 'Fields':
         $('#panel4 .list-group').find('a').remove();
+        db.field = '';
+        db.fields = {};
         break;
     }
     db.cm['#schema-text'].getDoc().setValue('{}');
@@ -138,18 +146,23 @@ var db = {
         db.cm['#schema-text'].getDoc().setValue(JSON.stringify({
           "AppName": {
             "key": "AppKey",
-            "options": { },
-            "tables": { }
+            "options": {},
+            "tables": {}
           }
         }, null, 2));
         db.equalizePannels();
       } else {
-        db.setTables(db.app);
-        if (db.apps.options !== undefined) {
-          db.cm['#schema-text'].getDoc().setValue(JSON.stringify(
-            db.apps.options, null, 2)
-          );
-        }
+        db.setTables(db.app); // async false
+        var tmpl = {};
+        tmpl['options'] = (
+          db.apps.options !== undefined ? db.apps.options : {}
+        );
+        tmpl['key'] = (
+          db.apps.key !== undefined ? db.apps.key : {}
+        );
+        db.cm['#schema-text'].getDoc().setValue(JSON.stringify(
+          tmpl, null, 2)
+        );
       }
     });
 
@@ -161,21 +174,26 @@ var db = {
       db.setTabsFor('Tables', db.table);
       if (db.table === 'new') {
         db.cm['#schema-text'].getDoc().setValue(JSON.stringify({
-          "tables": {
-            "TableName": {
-              "fields": { },
-              "aliases": { }
-            }
+          "TableName": {
+            "options": {},
+            "fields": {},
+            "aliases": {}
           }
         }, null, 2));
         db.equalizePannels();
       } else {
         db.setFields(db.table);
-        if (db.tables[db.table].options !== undefined) {
-          db.cm['#schema-text'].getDoc().setValue(JSON.stringify(
-            db.tables[db.table].options, null, 2)
-          );
-        }
+        var tbl = db.tables[db.table];
+        var tmpl = {};
+        tmpl['options'] = (
+          tbl.options !== undefined ? tbl.options : {}
+        );
+        tmpl['aliases'] = (
+          tbl.aliases !== undefined ? tbl.aliases : {}
+        );
+        db.cm['#schema-text'].getDoc().setValue(JSON.stringify(
+          tmpl, null, 2)
+        );
       }
       var doc = {};
       db.mkDoc(db.fields, doc);
@@ -199,12 +217,10 @@ var db = {
       db.setTabsFor('Fields', db.field);
       if (db.field === 'new') {
         db.cm['#schema-text'].getDoc().setValue(JSON.stringify({
-          "fields": {
-            "FieldName": {
-              "table": db.table,
-              "type": "",
-              "analyzer": ""
-            }
+          "FieldName": {
+            "table": db.table,
+            "type": "",
+            "analyzer": ""
           }
         }, null, 2));
       } else {
@@ -215,12 +231,36 @@ var db = {
     });
 
     $('#tab-pane-schema').on('click', '#post', function() {
-      event.preventDefault();
       try {
-        JSON.parse(db.cm['#schema-text'].getValue());
+        var entity = JSON.parse(db.cm['#schema-text'].getValue());
       } catch(e) {
         console.log(e);
       }
+      var endpoint = '';
+      switch (db.state) {
+        case 'Tenants':
+          endpoint = '_tenants';
+          break;
+        case 'Applications':
+          endpoint = '_applications?tenant='+db.tenant;
+          break;
+        case 'Tables':
+          endpoint = db.app+'/';
+          break;
+        case 'Fields':
+          endpoint = db.app+'/';
+          break;
+      }
+      console.log(endpoint);
+      return false;
+      $.ajax({
+        url: db.protocol+'://'+host+':'+port+'/'+endpoint,
+        method: 'POST',
+        contentType: 'application/json',
+        success: function(res) {
+        }
+      });
+      return false;
     });
   },
 
@@ -241,9 +281,6 @@ var db = {
         db.field = '';
         db.fields = {};
         $('#login').html('<span class="glyphicon glyphicon-log-in" aria-hidden="true"></span>&nbsp;&nbsp;'+host);
-        db.cm['#schema-text'].getDoc().setValue(
-          JSON.stringify(db.tenants, null, 2)
-        );
         for(ten in db.tenants) {
           $('#panel1 ul.list-group').append(
             '<a href="#" class="list-group-item">'+ten+'</a>'
@@ -253,7 +290,8 @@ var db = {
           '<a href="#" class="list-group-item">new<span class="pull-right glyphicon glyphicon-plus" aria-hidden="true"></span></a>'
         );
         db.equalizePannels();
-      }
+      },
+      async: false
     });
   },
 
@@ -283,9 +321,6 @@ var db = {
         db.tables = res[app].tables;
         db.field = '';
         db.fields = {};
-        db.cm['#schema-text'].getDoc().setValue(
-          JSON.stringify(db.apps.options, null, 2)
-        );
         Object.keys(db.tables).map(function(item) {
           $('#panel3 ul.list-group').append(
             '<a href="#" class="list-group-item">'+item+'</a>'
@@ -295,7 +330,8 @@ var db = {
           '<a href="#" class="list-group-item">new<span class="pull-right glyphicon glyphicon-plus" aria-hidden="true"></span></a>'
         );
         db.equalizePannels();
-      }
+      },
+      async: false
     });
   },
 
@@ -303,11 +339,11 @@ var db = {
     db.field = '';
     db.fields = db.tables[table].fields;
     Object.keys(db.fields).map(function(item) {
-      var t = db.fields[item].type;
+      var f = db.fields[item];
       $('#panel4 ul.list-group').append(
-        '<a href="#" class="list-group-item">'+
+        '<a'+(f.type === 'LINK' ? ' data-toggle="tooltip" title="'+f.table+'" ' : ' ')+'href="#" class="list-group-item">'+
           '<span class="badge">'+
-          (t === undefined ? 'GROUP' : t)+
+          (f.type === undefined ? 'GROUP' : f.type)+
           '</span>'+item+
         '</a>'
       );
@@ -349,7 +385,8 @@ var app = {
       var host = $('#hostname').val();
       var port = $('#port').val();
       db.clearPanelsFrom('Tenants');
-      db.setTenants(host, port);
+      db.setTenants(host, port); // async false
+      db.setTabsFor();
     });
   }
 };
