@@ -6,7 +6,7 @@ var db = {
   host: '',
   port: '',
   tenant: '', // selection (string)
-  tenants: {}, // params (dict of dicts)
+  tenants: {}, // params (dict)
   app: '',
   apps: {},
   table: '',
@@ -154,10 +154,11 @@ var db = {
       } else {
         db.setTables(db.app); // async false
         var tmpl = {};
-        tmpl['options'] = (
+        tmpl[db.app] = {};
+        tmpl[db.app]['options'] = (
           db.apps.options !== undefined ? db.apps.options : {}
         );
-        tmpl['key'] = (
+        tmpl[db.app]['key'] = (
           db.apps.key !== undefined ? db.apps.key : {}
         );
         db.cm['#schema-text'].getDoc().setValue(JSON.stringify(
@@ -185,10 +186,11 @@ var db = {
         db.setFields(db.table);
         var tbl = db.tables[db.table];
         var tmpl = {};
-        tmpl['options'] = (
+        tmpl[db.table] = {};
+        tmpl[db.table]['options'] = (
           tbl.options !== undefined ? tbl.options : {}
         );
-        tmpl['aliases'] = (
+        tmpl[db.table]['aliases'] = (
           tbl.aliases !== undefined ? tbl.aliases : {}
         );
         db.cm['#schema-text'].getDoc().setValue(JSON.stringify(
@@ -197,12 +199,12 @@ var db = {
       }
       var doc = {};
       db.mkDoc(db.fields, doc);
-      var template = {};
-      template['batch'] = {};
-      template['batch']['docs'] = [];
-      template['batch']['docs'].push({'doc': doc});
+      var tmpl = {};
+      tmpl['batch'] = {};
+      tmpl['batch']['docs'] = [];
+      tmpl['batch']['docs'].push({'doc': doc});
       db.cm['#data-text'].getDoc().setValue(JSON.stringify(
-        template, null, 2)
+        tmpl, null, 2)
       );
     });
 
@@ -224,8 +226,10 @@ var db = {
           }
         }, null, 2));
       } else {
+        var tmpl = {};
+        tmpl[db.field] = db.fields[db.field];
         db.cm['#schema-text'].getDoc().setValue(JSON.stringify(
-          db.fields[db.field], null, 2)
+          tmpl, null, 2)
         );
       }
     });
