@@ -16,20 +16,26 @@ var db = {
   cm: {}, // CodeMirror instances
 
   setTabsFor: function(panel, item) {
-    if (db.state !== panel)
+    // default to schema when new selected
+    if (db.state !== panel || item === 'new')
       $('.nav-tabs a[href=#tab-pane-schema]').tab('show');
+    // disable query when new selected
     $('.tab-content #get').prop('disabled',
       item === undefined || item === 'new'
     );
+    // disable create unless new selected
     $('#tab-pane-schema #post').prop('disabled',
       item === undefined || item !== 'new'
     );
+    // disable update when new selected
     $('.tab-content #put').prop('disabled',
       item === undefined || item === 'new'
     );
+    // disable delete when new selected
     $('.tab-content #delete').prop('disabled',
       item === undefined || item === 'new'
     );
+    // data and query enabled only for tables & new not selected
     if (panel === 'Tables' && item !== 'new') {
       $('#tab-data').removeClass('disabled');
       $('#tab-query').removeClass('disabled');
@@ -67,6 +73,7 @@ var db = {
     $('[id^=panel]').css('height', 'auto');
   },
 
+  // adjust CSS heights to longest
   equalizePannels: function() {
     var mh;
     mh = Math.max.apply(null,
@@ -77,6 +84,7 @@ var db = {
     $('[id^=panel]').css('height', mh);
   },
 
+  // enable JSON-friendly editor
   assignEditor: function(id, linter) {
     db.cm[id] = CodeMirror.fromTextArea($(id)[0], {
       mode: 'application/json',
@@ -87,6 +95,7 @@ var db = {
     });
   },
 
+  // make JSON for field to display in editor
   mkDoc: function(fields, doc) {
     Object.keys(fields).map(function(item) {
       if (fields[item].type !== undefined) {
@@ -110,6 +119,7 @@ var db = {
     });
     db.setTabsFor();
 
+    // handle selection in tenants list
     $('#panel1').on('click', '.list-group-item', function() {
       db.tenant = $(this).text();
       $(this).parent().find('a').removeClass('active');
@@ -136,6 +146,7 @@ var db = {
       }
     });
 
+    // handle selection in applications list 
     $('#panel2').on('click', '.list-group-item', function() {
       db.app = $(this).text();
       $(this).parent().find('a').removeClass('active');
@@ -167,6 +178,7 @@ var db = {
       }
     });
 
+    // handle selection in tables list
     $('#panel3').on('click', '.list-group-item', function() {
       db.table = $(this).text();
       $(this).parent().find('a').removeClass('active');
@@ -208,6 +220,7 @@ var db = {
       );
     });
 
+    // handle selection in fields list
     $('#panel4').on('click', '.list-group-item', function() {
       if ($(this).text() !== 'new') {
         db.field = Object.keys(db.fields)[$(this).index()];
@@ -234,6 +247,7 @@ var db = {
       }
     });
 
+    // handle create schema event
     $('#tab-pane-schema').on('click', '#post', function() {
       try {
         var entity = JSON.parse(db.cm['#schema-text'].getValue());
@@ -257,6 +271,7 @@ var db = {
       }
       console.log(endpoint);
       return false;
+      // TODO
       $.ajax({
         url: db.protocol+'://'+host+':'+port+'/'+endpoint,
         method: 'POST',
@@ -266,8 +281,23 @@ var db = {
       });
       return false;
     });
-  },
 
+    // handle update schema event
+    // TODO
+    // handle delete schema event
+    // TODO
+    // handle create data event
+    // TODO
+    // handle update data event
+    // TODO
+    // handle delete data event
+    // TODO
+    // handle query event
+    // TODO
+
+  },
+ 
+  // invoked after navbar setup
   setTenants: function(host, port) {
     $.ajax({
       url: db.protocol+'://'+host+':'+port+'/_tenants',
@@ -299,6 +329,7 @@ var db = {
     });
   },
 
+  // invoked upon tenant selection
   setApps: function(tenant) {
     db.table = '';
     db.tables = {};
@@ -315,6 +346,7 @@ var db = {
     db.equalizePannels();
   },
 
+  // invoked upon app selection
   setTables: function(app) {
     $.ajax({
       url: db.protocol+'://'+db.host+':'+db.port+'/_applications/'+app,
@@ -339,6 +371,7 @@ var db = {
     });
   },
 
+  // invoked upon table selection
   setFields: function(table) {
     db.field = '';
     db.fields = db.tables[table].fields;
