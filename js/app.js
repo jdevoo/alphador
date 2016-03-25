@@ -141,8 +141,7 @@ var db = {
         }, null, 2));
         db.equalizePannels();
       } else {
-        //db.setAppsFromTenant(db.tenants[db.tenant]);
-        db.setApps(db.host, db.port);
+        db.setApps();
         db.cm['#schema-text'].getDoc().setValue(
           JSON.stringify(db.tenants, null, 2)
         );
@@ -281,7 +280,7 @@ var db = {
         contentType: 'application/json',
         success: function(res) {
           db.clearPanelsFrom("Applications");
-          db.setApps(db.host, db.port);
+          db.setAppsFromHost();
           $('#flashMsg').html('<span class="label label-success">SUCCESS</span>');
         },
         async: false
@@ -325,7 +324,7 @@ var db = {
         method: 'DELETE',
         success: function(res) {
           db.clearPanelsFrom("Applications");
-          db.setApps(db.host, db.port);
+          db.setAppsFromHost();
           $('#flashMsg').html('<span class="label label-success">SUCCESS</span>');
         },
         async: false
@@ -396,23 +395,28 @@ var db = {
     });
   },
 
-  // invoked upon tenant selection, schema creation or deletion
-  setApps: function(host, port) {
+  // invoked upon tenant selection
+  setApps() {
+    db.tenants[db.tenant].applications.map(function(item) {
+      $('#panel2 ul.list-group').append(
+        '<a href="#" class="list-group-item">'+item+'</a>'
+      );
+    });
+    $('#panel2 ul.list-group').append(
+      '<a href="#" class="list-group-item">new<span class="pull-right glyphicon glyphicon-plus" aria-hidden="true"></span></a>'
+    );
+    db.equalizePannels();
+  },
+
+  // invoked upon schema creation or deletion
+  setAppsFromHost: function() {
     $.ajax({
-      url: db.protocol+'://'+host+':'+port+'/_applications?tenant='+db.tenant,
+      url: db.protocol+'://'+db.host+':'+db.port+'/_applications?tenant='+db.tenant,
       method: 'GET',
       dataType: 'json',
       success: function(res) {
         db.tenants[db.tenant].applications = Object.keys(res.applications);
-        db.tenants[db.tenant].applications.map(function(item) {
-          $('#panel2 ul.list-group').append(
-            '<a href="#" class="list-group-item">'+item+'</a>'
-          );
-        });
-        $('#panel2 ul.list-group').append(
-          '<a href="#" class="list-group-item">new<span class="pull-right glyphicon glyphicon-plus" aria-hidden="true"></span></a>'
-        );
-        db.equalizePannels();
+        db.setApps();
       },
       async: false
     });
