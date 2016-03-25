@@ -11,6 +11,7 @@ var db = {
   apps: {},
   table: '',
   tables: {},
+  query: '',
   field: '',
   fields: {},
   cm: {}, // CodeMirror instances
@@ -61,6 +62,7 @@ var db = {
         $('#panel3 .list-group').find('a').remove();
         db.table = '';
         db.tables = {};
+        db.query = '';
       case 'Fields':
         $('#panel4 .list-group').find('a').remove();
         db.field = '';
@@ -139,7 +141,8 @@ var db = {
         }, null, 2));
         db.equalizePannels();
       } else {
-        db.setApps(db.tenant);
+        //db.setAppsFromTenant(db.tenants[db.tenant]);
+        db.setApps(db.host, db.port);
         db.cm['#schema-text'].getDoc().setValue(
           JSON.stringify(db.tenants, null, 2)
         );
@@ -253,6 +256,7 @@ var db = {
         var entity = JSON.parse(db.cm['#schema-text'].getValue());
       } catch(e) {
         console.log(e);
+        return false;
       }
       var endpoint = '';
       switch (db.state) {
@@ -263,37 +267,100 @@ var db = {
           endpoint = '_applications?tenant='+db.tenant;
           break;
         case 'Tables':
-          endpoint = db.app+'/';
+          endpoint = db.app+'?tenant='+db.tenant;
           break;
         case 'Fields':
-          endpoint = db.app+'/';
+          endpoint = db.app+'?tenant='+db.tenant;
           break;
       }
-      console.log(endpoint);
-      return false;
-      // TODO
       $.ajax({
-        url: db.protocol+'://'+host+':'+port+'/'+endpoint,
+        url: db.protocol+'://'+db.host+':'+db.port+'/'+endpoint,
         method: 'POST',
+        dataType: 'text',
+        data: JSON.stringify(entity),
         contentType: 'application/json',
         success: function(res) {
-        }
+          db.clearPanelsFrom("Applications");
+          db.setApps(db.host, db.port);
+          $('#flashMsg').html('<span class="label label-success">SUCCESS</span>');
+        },
+        async: false
       });
       return false;
     });
 
     // handle update schema event
     // TODO
+
     // handle delete schema event
-    // TODO
+    $('#tab-pane-schema').on('click', '#delete', function() {
+      try {
+        var entity = JSON.parse(db.cm['#schema-text'].getValue());
+      } catch(e) {
+        console.log(e);
+        return false;
+      }
+      var endpoint = '';
+      switch (db.state) {
+        case 'Tenants':
+          endpoint = '_tenants';
+          break;
+        case 'Applications':
+          var app = Object.keys(entity)[0];
+          endpoint = '_applications/'+app;
+          if (!$.isEmptyObject(entity[app].key)) {
+            endpoint = endpoint + '/' + entity[app].key;
+          }
+          endpoint = endpoint+'?tenant='+db.tenant;
+          break;
+        case 'Tables':
+          endpoint = db.app+'/';
+          break;
+        case 'Fields':
+          endpoint = db.app+'/';
+          break;
+      }
+      $.ajax({
+        url: db.protocol+'://'+db.host+':'+db.port+'/'+endpoint,
+        method: 'DELETE',
+        success: function(res) {
+          db.clearPanelsFrom("Applications");
+          db.setApps(db.host, db.port);
+          $('#flashMsg').html('<span class="label label-success">SUCCESS</span>');
+        },
+        async: false
+      });
+      return false;
+    });
+
     // handle create data event
     // TODO
+
     // handle update data event
     // TODO
+
     // handle delete data event
     // TODO
+
     // handle query event
-    // TODO
+    $('#tab-pane-query').on('click', '#get', function() {
+      try {
+        var query = JSON.parse($('#query-text').val());
+      } catch(e) {
+        console.log(e);
+      }
+      var endpoint = db.app+'/'+db.table+'/_query?tenant='+db.tenant;
+      return false;
+      // TODO
+      $.ajax({
+        url: db.protocol+'://'+db.host+':'+db.port+'/'+endpoint,
+        method: 'GET',
+        dataType: 'json',
+        success: function(res) {
+        }
+      });
+      return false;
+    });
 
   },
  
@@ -302,7 +369,7 @@ var db = {
     $.ajax({
       url: db.protocol+'://'+host+':'+port+'/_tenants',
       method: 'GET',
-      contentType: 'application/json',
+      dataType: 'json',
       success: function(res) {
         db.tenant = '';
         db.tenants = res.tenants;
@@ -329,32 +396,39 @@ var db = {
     });
   },
 
-  // invoked upon tenant selection
-  setApps: function(tenant) {
-    db.table = '';
-    db.tables = {};
-    db.field = '';
-    db.fields = {};
-    db.tenants[tenant].applications.map(function(item) {
-      $('#panel2 ul.list-group').append(
-        '<a href="#" class="list-group-item">'+item+'</a>'
-      );
+  // invoked upon tenant selection, schema creation or deletion
+  setApps: function(host, port) {
+    $.ajax({
+      url: db.protocol+'://'+host+':'+port+'/_applications?tenant='+db.tenant,
+      method: 'GET',
+      dataType: 'json',
+      success: function(res) {
+        db.tenants[db.tenant].applications = Object.keys(res.applications);
+        db.tenants[db.tenant].applications.map(function(item) {
+          $('#panel2 ul.list-group').append(
+            '<a href="#" class="list-group-item">'+item+'</a>'
+          );
+        });
+        $('#panel2 ul.list-group').append(
+          '<a href="#" class="list-group-item">new<span class="pull-right glyphicon glyphicon-plus" aria-hidden="true"></span></a>'
+        );
+        db.equalizePannels();
+      },
+      async: false
     });
-    $('#panel2 ul.list-group').append(
-      '<a href="#" class="list-group-item">new<span class="pull-right glyphicon glyphicon-plus" aria-hidden="true"></span></a>'
-    );
-    db.equalizePannels();
   },
 
   // invoked upon app selection
   setTables: function(app) {
     $.ajax({
-      url: db.protocol+'://'+db.host+':'+db.port+'/_applications/'+app,
+      url: db.protocol+'://'+db.host+':'+db.port+'/_applications/'+app+'?tenant='+db.tenant,
       method: 'GET',
-      contentType: 'application/json',
+      dataType: 'json',
       success: function(res) {
         db.apps = res[app];
-        db.tables = res[app].tables;
+        if (res[app].tables !== undefined) {
+          db.tables = res[app].tables;
+        };
         db.field = '';
         db.fields = {};
         Object.keys(db.tables).map(function(item) {
@@ -412,7 +486,7 @@ var app = {
     $(document).ajaxError(function(event, xhr, opts, err) {
       app.hadErr = true;
       $('#flashMsg').html('<span class="label label-danger">Error</span>&nbsp;&nbsp;'+xhr.statusText.toLowerCase()).show();
-      console.log(JSON.stringify(xhr));
+      console.log(JSON.stringify(xhr, null, 2));
     });
   },
 

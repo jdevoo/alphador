@@ -4,7 +4,7 @@
 
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE9">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Alpha Dor</title>
   <link rel="stylesheet" href="css/bootstrap-3.3.5/css/bootstrap.min.css">
@@ -164,9 +164,11 @@
               <div class="form-group">
                 <textarea id="schema-text" class="form-control" rows="5"></textarea>
               </div>
-              <button id="post" type="submit" class="btn btn-default btn-sm">CREATE</button>
-              <button id="put" type="submit" class="btn btn-default btn-sm">UPDATE</button>
-              <button id="delete" type="submit" class="btn btn-default btn-sm" disabled>DELETE</button>
+              <div class="form-group">
+                <button id="post" type="submit" class="btn btn-default btn-sm">CREATE</button>
+                <button id="put" type="submit" class="btn btn-default btn-sm">UPDATE</button>
+                <button id="delete" type="submit" class="btn btn-default btn-sm" disabled>DELETE</button>
+              </div>
             </form>
           </div>
         </div>
@@ -178,9 +180,11 @@
               <div class="form-group">
                 <textarea id="data-text" class="form-control" rows="5"></textarea>
               </div>
-              <button id="post" type="submit" class="btn btn-default btn-sm">CREATE</button>
-              <button id="put" type="submit" class="btn btn-default btn-sm">UPDATE</button>
-              <button id="delete" type="submit" class="btn btn-default btn-sm" disabled>DELETE</button>
+              <div class="form-group">
+                <button id="post" type="submit" class="btn btn-default btn-sm">CREATE</button>
+                <button id="put" type="submit" class="btn btn-default btn-sm">UPDATE</button>
+                <button id="delete" type="submit" class="btn btn-default btn-sm" disabled>DELETE</button>
+              </div>
             </form>
           </div>
         </div>
@@ -188,11 +192,22 @@
       <div id="tab-pane-query" class="tab-pane">
         <div class="panel panel-default">
           <div class="panel-body">
-            <form>
+            <form class="form-horizontal">
               <div class="form-group">
-                <textarea id="query-text" class="form-control" rows="5"></textarea>
+                <div class="col-sm-6">
+                  <label for="query-text" class="control-label">Clause</label>
+                  <textarea id="query-text" class="form-control" rows="5"></textarea>
+                </div>
+                <div class="col-sm-6">
+                  <label for="metric-text" class="control-label">Metric</label>
+                  <textarea id="metric-text" class="form-control" rows="5"></textarea>
+                </div>
               </div>
-              <button id="get" type="submit" class="btn btn-default btn-sm">SUBMIT</button>&nbsp;&nbsp;<small>(replace the entity template with an object ID to retrieve all fields)</small>
+              <div class="form-group">
+                <div class="col-sm-12">
+                  <button id="get" type="submit" class="btn btn-default btn-sm">SUBMIT</button>
+                </div>
+              </div>
             </form>
           </div>
         </div>
