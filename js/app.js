@@ -5,6 +5,7 @@ var db = {
   protocol: 'http',
   host: '',
   port: '',
+  config: {},
   tenant: '', // selection (string)
   tenants: {}, // params (dict)
   app: '',
@@ -249,6 +250,16 @@ var db = {
       }
     });
 
+    // confirm delete show event handler
+    $('#confirm-delete').on('show.bs.modal', function(e) {
+      $message = $(e.relatedTarget).attr('data-message');
+      $(this).find('.modal-body p').text($message);
+      $title = $(e.relatedTarget).attr('data-title');
+      $(this).find('.modal-title').text($title);
+      var form = $(e.relatedTarget).closest('form');
+      $(this).find('.modal-footer #confirm').data('form', form);
+    });
+
     // handle create schema event
     $('#tab-pane-schema').on('click', '#post', function() {
       try {
@@ -292,7 +303,7 @@ var db = {
     // TODO
 
     // handle delete schema event
-    $('#tab-pane-schema').on('click', '#delete', function() {
+    $('#confirm-delete').on('click', '#confirm', function() {
       try {
         var entity = JSON.parse(db.cm['#schema-text'].getValue());
       } catch(e) {
@@ -329,6 +340,7 @@ var db = {
         },
         async: false
       });
+      $('#confirm-delete').modal('hide'); // ???
       return false;
     });
 
@@ -395,8 +407,20 @@ var db = {
     });
   },
 
+  setConfig: function(host, port) {
+    $.ajax({
+      url: db.protocol+'://'+host+':'+port+'/_config',
+      method: 'GET',
+      dataType: 'json',
+      success: function(res) {
+        db.config = res.configuration;
+      },
+      async: true
+    });
+  },
+
   // invoked upon tenant selection
-  setApps() {
+  setApps: function() {
     db.tenants[db.tenant].applications.map(function(item) {
       $('#panel2 ul.list-group').append(
         '<a href="#" class="list-group-item">'+item+'</a>'
@@ -501,6 +525,7 @@ var app = {
       var port = $('#port').val();
       db.clearPanelsFrom('Tenants');
       db.setTenants(host, port); // async false
+      db.setConfig(host, port); // async true
       db.setTabsFor();
     });
   }
