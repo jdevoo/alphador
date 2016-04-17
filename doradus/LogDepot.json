@@ -1,0 +1,8 @@
+{"LogDepot": {
+  "options": {
+    "StorageService": "LoggingService"
+  },
+  "tables": {
+    "AppLogs": {}
+  }
+}}

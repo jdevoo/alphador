@@ -143,9 +143,6 @@ var db = {
         db.equalizePannels();
       } else {
         db.setApps();
-        db.cm['#schema-text'].getDoc().setValue(
-          JSON.stringify(db.tenants, null, 2)
-        );
       }
     });
 
@@ -340,7 +337,6 @@ var db = {
         },
         async: false
       });
-      $('#confirm-delete').modal('hide'); // ???
       return false;
     });
 
@@ -393,6 +389,7 @@ var db = {
         db.field = '';
         db.fields = {};
         $('#login').html('<span class="glyphicon glyphicon-log-in" aria-hidden="true"></span>&nbsp;&nbsp;'+host);
+        $('.dropdown-toggle').removeClass('disabled');
         for(ten in db.tenants) {
           $('#panel1 ul.list-group').append(
             '<a href="#" class="list-group-item">'+ten+'</a>'
@@ -430,6 +427,9 @@ var db = {
       '<a href="#" class="list-group-item">new<span class="pull-right glyphicon glyphicon-plus" aria-hidden="true"></span></a>'
     );
     db.equalizePannels();
+    db.cm['#schema-text'].getDoc().setValue(
+      JSON.stringify(db.tenants, null, 2)
+    );
   },
 
   // invoked upon schema creation or deletion
@@ -513,16 +513,23 @@ var app = {
 
     $(document).ajaxError(function(event, xhr, opts, err) {
       app.hadErr = true;
-      $('#flashMsg').html('<span class="label label-danger">Error</span>&nbsp;&nbsp;'+xhr.statusText.toLowerCase()).show();
+      $('#flashMsg').html('<span class="label label-danger">Error</span>&nbsp;&nbsp;'+xhr.statusText+'&nbsp;'+xhr.responseText).show();
       console.log(JSON.stringify(xhr, null, 2));
     });
   },
 
   setupNavbar: function() {
     $('#login').html('<span class="glyphicon glyphicon-log-in" aria-hidden="true"></span>&nbsp;&nbsp;no host');
+    $('.dropdown-toggle').addClass('disabled');
     $('#set_host').click(function() {
       var host = $('#hostname').val();
       var port = $('#port').val();
+      $('#view-logs').attr('href', 
+        db.protocol+'://'+host+':'+port+'/_logs');
+      $('#view-threads').attr('href',
+        db.protocol+'://'+host+':'+port+'/_dump');
+      $('#view-tasks').attr('href',
+        db.protocol+'://'+host+':'+port+'/_tasks');
       db.clearPanelsFrom('Tenants');
       db.setTenants(host, port); // async false
       db.setConfig(host, port); // async true
