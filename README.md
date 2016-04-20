@@ -1,22 +1,18 @@
 # Alpha Dor
 
-Simple front-end for [Dell Doradus](https://github.com/dell-oss/Doradus). Started with Spider databases. Still work-in-progress.
+Simple front-end for [Dell Doradus](https://github.com/dell-oss/Doradus). This is work-in-progress.
 
 ## Installation
 
-Deploy on a web server and access from a browser. Assumes running Cassandra and Doradus.
+Deploy and access from a browser. Assumes running Cassandra and Doradus.
 
 ## Usage
 
-Start clicking the connect button in the navbar to connect to your Doradus instance. The user interface is loosely based on an OO browser as those found in Smalltalk.
+Start clicking the connect button in the navbar to connect to your Doradus instance. The user interface is loosely based on an OO browser as those found in Smalltalk. Supports OLAP, Spider and Log services.
 
 ## History
 
 TODO: Write history
-
-## Credits
-
-TODO: Write credits
 
 ## License
 

@@ -93,7 +93,6 @@ var db = {
       mode: 'application/json',
       gutters: ['CodeMirror-lint-markers'],
       lint: true,
-      autoRefresh: true,
       lineNumbers: true
     });
   },
@@ -244,6 +243,17 @@ var db = {
         db.cm['#schema-text'].getDoc().setValue(JSON.stringify(
           tmpl, null, 2)
         );
+      }
+    });
+
+    $('a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
+      switch ($(e.target).attr('href')) {
+        case '#tab-pane-schema':
+          db.cm['#schema-text'].refresh();
+          break;
+        case '#tab-pane-data':
+          db.cm['#data-text'].refresh();
+          break;
       }
     });
 
@@ -524,6 +534,8 @@ var app = {
     $('#set_host').click(function() {
       var host = $('#hostname').val();
       var port = $('#port').val();
+      $('#view-config').attr('href', 
+        db.protocol+'://'+host+':'+port+'/_config');
       $('#view-logs').attr('href', 
         db.protocol+'://'+host+':'+port+'/_logs');
       $('#view-threads').attr('href',
