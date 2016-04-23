@@ -6,16 +6,17 @@ var db = {
   host: '',
   port: '',
   config: {},
-  tenant: '', // selection (string)
-  tenants: {}, // params (dict)
+  tenant: '',    // selection
+  tendict: {},   // tenant params
   app: '',
-  apps: {},
+  appdict: {},   // application params
+  stodict: {},   // storage type and shards
   table: '',
-  tables: {},
+  tabdict: {},   // table params
   query: '',
   field: '',
-  fields: {},
-  cm: {}, // CodeMirror instances
+  flddict: {},   // field params
+  cm: {},        // CodeMirror instances
 
   setTabsFor: function(panel, item) {
     // default to schema when new selected
@@ -54,20 +55,21 @@ var db = {
       case 'Tenants':
         $('#panel1 .list-group').find('a').remove();
         db.tenant = '';
-        db.tenants = {};
+        db.tendict = {};
       case 'Applications':
         $('#panel2 .list-group').find('a').remove();
         db.app = '';
-        db.apps = {};
+        db.appdict = {};
+        db.stodict = {};
       case 'Tables':
         $('#panel3 .list-group').find('a').remove();
         db.table = '';
-        db.tables = {};
+        db.tabdict = {};
         db.query = '';
       case 'Fields':
         $('#panel4 .list-group').find('a').remove();
         db.field = '';
-        db.fields = {};
+        db.flddict = {};
         break;
     }
     db.cm['#schema-text'].getDoc().setValue('{}');
@@ -141,13 +143,17 @@ var db = {
         }, null, 2));
         db.equalizePannels();
       } else {
-        db.setApps();
+        db.setApps(db.tenant);
       }
     });
 
     // handle selection in applications list 
     $('#panel2').on('click', '.list-group-item', function() {
-      db.app = $(this).text();
+      if ($(this).text() !== 'new') {
+        db.app = db.tendict[db.tenant].applications[$(this).index()];
+      } else {
+        db.app = 'new';
+      }
       $(this).parent().find('a').removeClass('active');
       $(this).addClass('active');
       db.clearPanelsFrom('Tables');
@@ -166,10 +172,10 @@ var db = {
         var tmpl = {};
         tmpl[db.app] = {};
         tmpl[db.app]['options'] = (
-          db.apps.options !== undefined ? db.apps.options : {}
+          db.appdict.options !== undefined ? db.appdict.options : {}
         );
         tmpl[db.app]['key'] = (
-          db.apps.key !== undefined ? db.apps.key : {}
+          db.appdict.key !== undefined ? db.appdict.key : {}
         );
         db.cm['#schema-text'].getDoc().setValue(JSON.stringify(
           tmpl, null, 2)
@@ -195,7 +201,7 @@ var db = {
         db.equalizePannels();
       } else {
         db.setFields(db.table);
-        var tbl = db.tables[db.table];
+        var tbl = db.tabdict[db.table];
         var tmpl = {};
         tmpl[db.table] = {};
         tmpl[db.table]['options'] = (
@@ -209,7 +215,7 @@ var db = {
         );
       }
       var doc = {};
-      db.mkDoc(db.fields, doc);
+      db.mkDoc(db.flddict, doc);
       var tmpl = {};
       tmpl['batch'] = {};
       tmpl['batch']['docs'] = [];
@@ -222,7 +228,7 @@ var db = {
     // handle selection in fields list
     $('#panel4').on('click', '.list-group-item', function() {
       if ($(this).text() !== 'new') {
-        db.field = Object.keys(db.fields)[$(this).index()];
+        db.field = Object.keys(db.flddict)[$(this).index()];
       } else {
         db.field = 'new';
       }
@@ -239,7 +245,7 @@ var db = {
         }, null, 2));
       } else {
         var tmpl = {};
-        tmpl[db.field] = db.fields[db.field];
+        tmpl[db.field] = db.flddict[db.field];
         db.cm['#schema-text'].getDoc().setValue(JSON.stringify(
           tmpl, null, 2)
         );
@@ -298,7 +304,7 @@ var db = {
         contentType: 'application/json',
         success: function(res) {
           db.clearPanelsFrom("Applications");
-          db.setAppsFromHost();
+          db.setApps(db.tenant);
           $('#flashMsg').html('<span class="label label-success">SUCCESS</span>');
         },
         async: false
@@ -342,7 +348,7 @@ var db = {
         method: 'DELETE',
         success: function(res) {
           db.clearPanelsFrom("Applications");
-          db.setAppsFromHost();
+          db.setApps(db.tenant);
           $('#flashMsg').html('<span class="label label-success">SUCCESS</span>');
         },
         async: false
@@ -389,22 +395,23 @@ var db = {
       dataType: 'json',
       success: function(res) {
         db.tenant = '';
-        db.tenants = res.tenants;
+        db.tendict = res.tenants;
         db.host = host;
         db.port = port;
         db.app = '';
-        db.apps = {};
+        db.appdict = {};
+        db.stodict = {};
         db.table = '';
-        db.tables = {};
+        db.tabdict = {};
         db.field = '';
-        db.fields = {};
+        db.flddict = {};
         $('#login').html('<span class="glyphicon glyphicon-log-in" aria-hidden="true"></span>&nbsp;&nbsp;'+host);
         $('.dropdown-toggle').removeClass('disabled');
-        for(ten in db.tenants) {
+        Object.keys(db.tendict).map(function(ten) {
           $('#panel1 ul.list-group').append(
             '<a href="#" class="list-group-item">'+ten+'</a>'
           );
-        };
+        });
         $('#panel1 ul.list-group').append(
           '<a href="#" class="list-group-item">new<span class="pull-right glyphicon glyphicon-plus" aria-hidden="true"></span></a>'
         );
@@ -426,34 +433,56 @@ var db = {
     });
   },
 
-  // invoked upon tenant selection
-  setApps: function() {
-    db.tenants[db.tenant].applications.map(function(item) {
-      $('#panel2 ul.list-group').append(
-        '<a href="#" class="list-group-item">'+item+'</a>'
-      );
-    });
-    $('#panel2 ul.list-group').append(
-      '<a href="#" class="list-group-item">new<span class="pull-right glyphicon glyphicon-plus" aria-hidden="true"></span></a>'
-    );
-    db.equalizePannels();
-    db.cm['#schema-text'].getDoc().setValue(
-      JSON.stringify(db.tenants, null, 2)
-    );
-  },
-
-  // invoked upon schema creation or deletion
-  setAppsFromHost: function() {
+  // first extend tenant details, then refresh apps fetching shards for OLAPServices
+  setApps: function(tenant) {
     $.ajax({
-      url: db.protocol+'://'+db.host+':'+db.port+'/_applications?tenant='+db.tenant,
+      url: db.protocol+'://'+db.host+':'+db.port+'/_tenants/'+tenant,
       method: 'GET',
       dataType: 'json',
       success: function(res) {
-        db.tenants[db.tenant].applications = Object.keys(res.applications);
-        db.setApps();
+        $.extend(db.tendict[tenant], res[tenant]);
+        $.ajax({
+          url: db.protocol+'://'+db.host+':'+db.port+'/_applications?tenant='+tenant,
+          method: 'GET',
+          dataType: 'json',
+          success: function(res) {
+            db.tendict[tenant].applications = Object.keys(res.applications);
+            db.tendict[tenant].applications.map(function(item) {
+              db.stodict[item] = {};
+              db.stodict[item].options = {};
+              db.stodict[item].options.StorageService = res.applications[item].options.StorageService;
+              if (db.stodict[item].options.StorageService === 'OLAPService') {
+                $.ajax({
+                  url: db.protocol+'://'+db.host+':'+db.port+'/'+item+'/_shards?tenant='+db.tenant,
+                  method: 'GET',
+                  dataType: 'json',
+                  success: function(res) {
+                    db.stodict[item].shards = res.result[item].shards;
+                  },
+                  async: false
+                });
+              }
+            });
+          },
+          async: false
+        });
+        db.tendict[tenant].applications.map(function(item) {
+          var o = db.stodict[item].options;
+          $('#panel2 ul.list-group').append(
+            '<a href="#" class="list-group-item"><span class="badge">'+o.StorageService+'</span>'+item+'</a>'
+          );
+        });
+        $('#panel2 ul.list-group').append(
+          '<a href="#" class="list-group-item">new<span class="pull-right glyphicon glyphicon-plus" aria-hidden="true"></span></a>'
+        );
+        db.equalizePannels();
+        db.cm['#schema-text'].getDoc().setValue(
+          JSON.stringify(db.tendict, null, 2)
+        );
       },
       async: false
     });
+
   },
 
   // invoked upon app selection
@@ -463,13 +492,13 @@ var db = {
       method: 'GET',
       dataType: 'json',
       success: function(res) {
-        db.apps = res[app];
+        db.appdict = res[app];
         if (res[app].tables !== undefined) {
-          db.tables = res[app].tables;
+          db.tabdict = res[app].tables;
         };
         db.field = '';
-        db.fields = {};
-        Object.keys(db.tables).map(function(item) {
+        db.flddict = {};
+        Object.keys(db.tabdict).map(function(item) {
           $('#panel3 ul.list-group').append(
             '<a href="#" class="list-group-item">'+item+'</a>'
           );
@@ -486,14 +515,12 @@ var db = {
   // invoked upon table selection
   setFields: function(table) {
     db.field = '';
-    db.fields = db.tables[table].fields;
-    Object.keys(db.fields).map(function(item) {
-      var f = db.fields[item];
+    db.flddict = db.tabdict[table].fields;
+    Object.keys(db.flddict).map(function(item) {
+      var f = db.flddict[item];
       $('#panel4 ul.list-group').append(
         '<a'+(f.type === 'LINK' ? ' data-toggle="tooltip" title="'+f.table+'" ' : ' ')+'href="#" class="list-group-item">'+
-          '<span class="badge">'+
-          (f.type === undefined ? 'GROUP' : f.type)+
-          '</span>'+item+
+          '<span class="badge">'+(f.type === undefined ? 'GROUP' : f.type)+'</span>'+item+
         '</a>'
       );
     });
@@ -522,8 +549,9 @@ var app = {
     });
 
     $(document).ajaxError(function(event, xhr, opts, err) {
+      var msg = '<span class="label label-danger">Error</span>&nbsp;&nbsp;'+xhr.statusText+'&nbsp;';
       app.hadErr = true;
-      $('#flashMsg').html('<span class="label label-danger">Error</span>&nbsp;&nbsp;'+xhr.statusText+'&nbsp;'+xhr.responseText).show();
+      $('#flashMsg').html(msg).show();
       console.log(JSON.stringify(xhr, null, 2));
     });
   },
