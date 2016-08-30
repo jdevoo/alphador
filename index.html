@@ -21,20 +21,21 @@
 
 <body>
 <div class="container-fluid">
+<!-- navbar -->
 <div class="row">
-  <nav class="navbar navbar-default">
+  <nav class="navbar navbar-default navbar-fixed-top">
     <div class="container-fluid">
       <div class="navbar-header">
         <a class="navbar-brand" href="#">Alpha Dor</a>
-      </div>
-      <div class="navbar-header">
         <p id="flashMsg" class="navbar-text collapse"></p>
       </div>
       <div id="navbar" class="navbar-collapse collapse">
         <ul class="nav navbar-nav navbar-right">
-          <div id="creds" class="collapse">
-            <li><p class="navbar-text">&nbsp;</p></li>
-          </div>
+          <li>
+            <div id="creds" class="collapse">
+              <p class="navbar-text">&nbsp;</p>
+            </div>
+          </li>
           <li>
             <button id="login" type="button" class="btn btn-default navbar-btn" data-toggle="modal" data-target="#host-form"><span class="glyphicon glyphicon-log-in" aria-hidden="true"></span>&nbsp;&nbsp;localhost</button>
             <div class="btn-group">
@@ -49,65 +50,12 @@
           </li>
         </ul>
       </div>
-      <div id="host-form" class="modal fade" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-sm">
-          <div class="modal-content">
-            <form class="form-horizontal" method="post" action="">
-              <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h4 class="modal-title">Doradus Connection</h4>
-              </div>
-              <div class="modal-body">
-                <div class="form-group">
-                  <label for="hostname" class="col-sm-4 control-label">Host</label>
-                  <div class="col-sm-8">
-                    <input id="hostname" type="text" class="form-control" placeholder="localhost">
-                  </div>
-                  <label for="port" class="col-sm-4 control-label">Port</label>
-                  <div class="col-sm-8">
-                    <input id="port" type="text" class="form-control" placeholder="1123">
-                  </div>
-                </div>
-              </div>
-              <div class="modal-footer">
-                <button id="set_host" type="button" data-dismiss="modal" class="btn btn-primary">Ok</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      <div id="creds-form" class="modal fade" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-sm">
-          <div class="modal-content">
-            <form class="form-horizontal" method="post" action="">
-              <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h4 class="modal-title">Doradus Credentials</h4>
-              </div>
-              <div class="modal-body">
-                <div class="form-group">
-                  <label for="username" class="col-sm-4 control-label">Username</label>
-                  <div class="col-sm-8">
-                    <input id="username" type="text" class="form-control">
-                  </div>
-                  <label for="password" class="col-sm-4 control-label">Password</label>
-                  <div class="col-sm-8">
-                    <input id="password" type="text" class="form-control">
-                  </div>
-                </div>
-              </div>
-              <div class="modal-footer">
-                <button id="set_creds" type="button" data-dismiss="modal" class="btn btn-primary">Ok</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
     </div>
   </nav>
 </div>
 
 
+<!-- tenants, applications, tables & fields panels -->
 <div class="row-fluid row-eq-height">
   <div class="col-md-3 col-sm-3">
     <div id="panel1" class="panel panel-default">
@@ -156,6 +104,7 @@
 </div>
 
 
+<!-- content tabs -->
 <div class="row-fluid">
   <div class="col-md-12 col-sm-12">
     <ul class="nav nav-tabs">
@@ -245,28 +194,85 @@
           </div>
         </div>
       </div>
-      <div id="confirm-delete" class="modal fade" tabindex="-1" role="dialog">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <form method="post" action="">
-              <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h4 class="modal-title">Delete Confirmation</h4>
-              </div>
-              <div class="modal-body">
-                <p>Some Message</p>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button id="confirm" type="button" class="btn btn-default btn-danger" data-dismiss="modal">Delete</a>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </div>
+</div>
+
+
+<!-- modals -->
+<div id="host-form" class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <form class="form-horizontal" method="post" action="">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Doradus Connection</h4>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="hostname" class="col-sm-4 control-label">Host</label>
+            <div class="col-sm-8">
+              <input id="hostname" type="text" class="form-control" placeholder="localhost">
+            </div>
+            <label for="port" class="col-sm-4 control-label">Port</label>
+            <div class="col-sm-8">
+              <input id="port" type="text" class="form-control" placeholder="1123">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="set_host" type="button" data-dismiss="modal" class="btn btn-primary">Ok</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div id="confirm-delete" class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Delete Confirmation</h4>
+        </div>
+        <div class="modal-body">
+          <p>Some Message</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          <button id="confirm" type="button" class="btn btn-default btn-danger" data-dismiss="modal">Delete</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div id="creds-form" class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <form class="form-horizontal" method="post" action="">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Doradus Credentials</h4>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="username" class="col-sm-4 control-label">Username</label>
+            <div class="col-sm-8">
+              <input id="username" type="text" class="form-control">
+            </div>
+            <label for="password" class="col-sm-4 control-label">Password</label>
+            <div class="col-sm-8">
+              <input id="password" type="text" class="form-control">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="set_creds" type="button" data-dismiss="modal" class="btn btn-primary">Ok</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 
 

@@ -1,22 +1,24 @@
-// doradusBrowser
+// doradus browser
+//
+// table creation broken
 
 var db = {
-  state: undefined,
+  state: undefined,   // active panel
   protocol: 'http',
   host: '',
   port: '',
   config: {},
-  tenant: '',    // selection
-  tendict: {},   // tenant params
-  app: '',
-  appdict: {},   // application params
-  stodict: {},   // storage type and shards
-  table: '',
-  tabdict: {},   // table params
+  tenant: '',         // selected tenant
+  tendict: {},        // keys: applications
+  app: '',            // selected app
+  appdict: {},        // keys: tables, options, key
+  stodict: {},        // keys: shards, options.StorageService
+  table: '',          // selected table
+  tabdict: {},        // keys: fields, options, aliases
   query: '',
-  field: '',
-  flddict: {},   // field params
-  cm: {},        // CodeMirror instances
+  field: '',          // selected field
+  flddict: {},        // keys: field names
+  cm: {},             // CodeMirror instances
 
   setTabsFor: function(panel, item) {
     // default to schema when new selected
@@ -147,7 +149,7 @@ var db = {
       }
     });
 
-    // handle selection in applications list 
+    // handle selection in applications list
     $('#panel2').on('click', '.list-group-item', function() {
       if ($(this).text() !== 'new') {
         db.app = db.tendict[db.tenant].applications[$(this).index()];
@@ -177,6 +179,7 @@ var db = {
         tmpl[db.app]['key'] = (
           db.appdict.key !== undefined ? db.appdict.key : {}
         );
+        // only render options and key in schema tab
         db.cm['#schema-text'].getDoc().setValue(JSON.stringify(
           tmpl, null, 2)
         );
@@ -210,6 +213,7 @@ var db = {
         tmpl[db.table]['aliases'] = (
           tbl.aliases !== undefined ? tbl.aliases : {}
         );
+        // only render options and aliases in schema tab
         db.cm['#schema-text'].getDoc().setValue(JSON.stringify(
           tmpl, null, 2)
         );
@@ -238,9 +242,10 @@ var db = {
       if (db.field === 'new') {
         db.cm['#schema-text'].getDoc().setValue(JSON.stringify({
           "FieldName": {
-            "table": db.table,
             "type": "",
-            "analyzer": ""
+            "analyzer": "",
+            "table": "",
+            "inverse": ""
           }
         }, null, 2));
       } else {
@@ -282,6 +287,7 @@ var db = {
         return false;
       }
       var endpoint = '';
+      var method = 'POST';
       switch (db.state) {
         case 'Tenants':
           endpoint = '_tenants';
@@ -290,15 +296,33 @@ var db = {
           endpoint = '_applications?tenant='+db.tenant;
           break;
         case 'Tables':
-          endpoint = db.app+'?tenant='+db.tenant;
+          endpoint = '_applications/'+db.app;
+          method = 'PUT';
+          if (!$.isEmptyObject(db.appdict.key)) {
+            endpoint = endpoint+'/'+db.appdict.key;
+          }
+          endpoint = endpoint+'?tenant='+db.tenant;
+          $.extend(true, db.appdict, {
+            "tables": entity
+          });
+          entity = {};
+          entity[db.app] = db.appdict;
+          console.log(entity);
           break;
         case 'Fields':
-          endpoint = db.app+'?tenant='+db.tenant;
+          endpoint = '_applications/'+db.app+'?tenant='+db.tenant;
+          method = 'PUT';
+          $.extend(true, db.appdict.tables[db.table], {
+            "fields": entity
+          });
+          entity = {};
+          entity[db.app] = db.appdict;
+          console.log(entity);
           break;
       }
       $.ajax({
         url: db.protocol+'://'+db.host+':'+db.port+'/'+endpoint,
-        method: 'POST',
+        method: method,
         dataType: 'text',
         data: JSON.stringify(entity),
         contentType: 'application/json',
@@ -306,6 +330,7 @@ var db = {
           db.clearPanelsFrom("Applications");
           db.setApps(db.tenant);
           $('#flashMsg').html('<span class="label label-success">SUCCESS</span>');
+          db.state = 'Tenants';
         },
         async: false
       });
@@ -327,12 +352,13 @@ var db = {
       switch (db.state) {
         case 'Tenants':
           endpoint = '_tenants';
+          return false; // TODO
           break;
         case 'Applications':
           var app = Object.keys(entity)[0];
           endpoint = '_applications/'+app;
           if (!$.isEmptyObject(entity[app].key)) {
-            endpoint = endpoint + '/' + entity[app].key;
+            endpoint = endpoint+'/'+entity[app].key;
           }
           endpoint = endpoint+'?tenant='+db.tenant;
           break;
@@ -350,6 +376,7 @@ var db = {
           db.clearPanelsFrom("Applications");
           db.setApps(db.tenant);
           $('#flashMsg').html('<span class="label label-success">SUCCESS</span>');
+          db.state = 'Tenants';
         },
         async: false
       });
@@ -376,6 +403,7 @@ var db = {
       return false;
       // TODO
       $.ajax({
+        cache: false,
         url: db.protocol+'://'+db.host+':'+db.port+'/'+endpoint,
         method: 'GET',
         dataType: 'json',
@@ -384,18 +412,18 @@ var db = {
       });
       return false;
     });
-
   },
  
   // invoked after navbar setup
   setTenants: function(host, port) {
     $.ajax({
+      cache: false,
       url: db.protocol+'://'+host+':'+port+'/_tenants',
       method: 'GET',
       dataType: 'json',
       success: function(res) {
         db.tenant = '';
-        db.tendict = res.tenants;
+        db.tendict = res.tenants; // applications key only
         db.host = host;
         db.port = port;
         db.app = '';
@@ -436,12 +464,15 @@ var db = {
   // first extend tenant details, then refresh apps fetching shards for OLAPServices
   setApps: function(tenant) {
     $.ajax({
+      cache: false,
       url: db.protocol+'://'+db.host+':'+db.port+'/_tenants/'+tenant,
       method: 'GET',
       dataType: 'json',
       success: function(res) {
-        $.extend(db.tendict[tenant], res[tenant]);
+        // extend tenant with properties and users keys
+        $.extend(true, db.tendict[tenant], res[tenant]);
         $.ajax({
+          cache: false,
           url: db.protocol+'://'+db.host+':'+db.port+'/_applications?tenant='+tenant,
           method: 'GET',
           dataType: 'json',
@@ -449,15 +480,16 @@ var db = {
             db.tendict[tenant].applications = Object.keys(res.applications);
             db.tendict[tenant].applications.map(function(item) {
               db.stodict[item] = {};
-              db.stodict[item].options = {};
-              db.stodict[item].options.StorageService = res.applications[item].options.StorageService;
+              db.stodict[item]['options'] = {};
+              db.stodict[item]['options']['StorageService'] = res.applications[item].options.StorageService;
               if (db.stodict[item].options.StorageService === 'OLAPService') {
                 $.ajax({
+                  cache: false,
                   url: db.protocol+'://'+db.host+':'+db.port+'/'+item+'/_shards?tenant='+db.tenant,
                   method: 'GET',
                   dataType: 'json',
                   success: function(res) {
-                    db.stodict[item].shards = res.result[item].shards;
+                    db.stodict[item]['shards'] = res.result[item].shards;
                   },
                   async: false
                 });
@@ -482,12 +514,12 @@ var db = {
       },
       async: false
     });
-
   },
 
   // invoked upon app selection
   setTables: function(app) {
     $.ajax({
+      cache: false,
       url: db.protocol+'://'+db.host+':'+db.port+'/_applications/'+app+'?tenant='+db.tenant,
       method: 'GET',
       dataType: 'json',
@@ -515,7 +547,9 @@ var db = {
   // invoked upon table selection
   setFields: function(table) {
     db.field = '';
-    db.flddict = db.tabdict[table].fields;
+    if (db.tabdict[table].fields !== undefined) {
+      db.flddict = db.tabdict[table].fields;
+    }
     Object.keys(db.flddict).map(function(item) {
       var f = db.flddict[item];
       $('#panel4 ul.list-group').append(
